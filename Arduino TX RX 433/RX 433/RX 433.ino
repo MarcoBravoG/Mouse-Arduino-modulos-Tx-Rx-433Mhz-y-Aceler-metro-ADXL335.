@@ -1,0 +1,138 @@
+#include "Mouse.h"
+// transmitter.ino
+
+// include libraries: 
+#include <RH_ASK.h>
+#include <SPI.h>
+
+// Create an instance of the RadioHead ASK handler:
+// -> Default pins for the RF modules:
+//    Pin 11: Data input from receiver
+//    Pin 12: Data output to transmitter
+RH_ASK radio;
+
+// Create and initialize three 8-bit variables for our RGB values:
+uint8_t r = 0;
+uint8_t g = 0;
+uint8_t b = 0;
+
+
+// set pin numbers for switch, joystick axes, and LED:
+const int switchPin = 5; // switch to turn on and off mouse control
+//const int mouseButton = 7; // input pin for the mouse pushButton
+const int xAxis = A1; // joystick X axis
+const int yAxis = A2; // joystick Y axis
+const int ledPin = 2; // Mouse control LED
+ 
+// parameters for reading the joystick:
+int range = 12; // output range of X or Y movement
+int responseDelay = 5; // response delay of the mouse, in ms
+int threshold = range / 4; // resting threshold
+int center = range / 2; // resting position value
+ 
+boolean mouseIsActive = false; // whether or not to control the mouse
+int lastSwitchState = LOW; // previous switch state
+ 
+void setup() {
+pinMode(switchPin, INPUT); // the switch pin
+pinMode(ledPin, OUTPUT); // the LED pin
+// take control of the mouse:
+Mouse.begin();
+radio.init();
+Serial.begin(9600);   // inicializa monitor serie a 9600 bps
+}
+ 
+void loop() {
+  // create an empty array of 8-bit variables that is used to store the received data:
+  uint8_t data[3];
+  // store the expected data length in a variable (3 Bytes: One for r, g, and b):
+  uint8_t dataLength = 3;
+
+  if(radio.recv(data, &dataLength)){
+    // when data has been received, extract the received RGB values from the array:
+    // -> The order must be the same as in the dataArray[] on the transmitter side (here: 0: red, 1: green, 2: blue):
+    r = data[0]; //A1
+    g = data[1]; //A2
+    b = data[2]; //3
+
+    
+     Serial.print(" R: ");  // imprime Mensaje:
+     Serial.print(r);   // imprime buffer de mensaje     
+     Serial.print(" G: ");  // imprime Mensaje:
+     Serial.print(g*4);   // imprime buffer de mensaje     
+     Serial.print(" B: ");  // imprime Mensaje:
+     Serial.println(b*4);   // imprime buffer de mensaje 
+    
+  }
+
+
+// read the switch:
+int switchState = digitalRead(switchPin);
+// if it's changed and it's high, toggle the mouse state:
+if (switchState != lastSwitchState) {
+if (switchState == HIGH) {
+mouseIsActive = !mouseIsActive;
+// turn on LED to indicate mouse state:
+digitalWrite(ledPin, mouseIsActive);
+}
+}
+// save switch state for next comparison:
+lastSwitchState = switchState;
+
+/* 
+// read and scale the two axes:
+int xReading = readAxis(512+(int)g*4);
+int yReading = readAxis(512+(int)b)*4;
+ // if the mouse control state is active, move the mouse:
+*/
+
+int xReading = g*4+1000;
+int yReading = b*4+1000;
+
+
+if (mouseIsActive) {
+Mouse.move(xReading, yReading, 0);
+}
+ 
+// read the mouse button and click or not click:
+// if the mouse button is pressed:
+if (r> 125) {
+// if the mouse is not pressed, press it:
+if (!Mouse.isPressed(MOUSE_LEFT)) {
+Mouse.press(MOUSE_LEFT);
+}
+}
+// else the mouse button is not pressed:
+else {
+// if the mouse is pressed, release it:
+if (Mouse.isPressed(MOUSE_LEFT)) {
+Mouse.release(MOUSE_LEFT);
+}
+}
+ 
+delay(responseDelay);
+}
+ 
+/*
+reads an axis (0 or 1 for x or y) and scales the
+analog input range to a range from 0 to 
+*/
+ 
+int readAxis(int thisAxis) {
+// read the analog input:
+int reading = analogRead(thisAxis);
+ 
+// map the reading from the analog input range to the output range:
+reading = map(reading, 0, 1023, 0, range);
+ 
+// if the output reading is outside from the
+// rest position threshold, use it:
+int distance = reading - center;
+ 
+if (abs(distance) < threshold) {
+distance = 0;
+}
+ 
+// return the distance for this axis:
+return distance;
+}

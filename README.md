@@ -1,1 +1,4 @@
 # Mouse-Arduino-modulos-Tx-Rx-433Mhz-y-Aceler-metro-ADXL335.
+
+El siguiente circuito está conformado con el modulo Arduino uno que permite mantener la comunicación inalámbrica mediante el modulo TX 433MHZ y por otro parte el módulo acelerómetro ADXL335 que están unidos los dos ejes X y Y y finalmente, por un pulsante que permite realizar la función de clic izquierdo del ratón.
+Por otra parte, se a utilizado el módulo del Arduino Due esta peculiar placa tiene la capacidad de mantener HID esto quiere decir que podemos realizar la réplica de ratón y teclado. En este modulo se conecta por una parte el modulo RX 4300MHZ capas de recolectar los datos provenientes del módulo TX, El puerto USB de este Arduino debe estar conectado al pc y normalizado para un correcto funcionamiento del raton como se puede observar en el video demostrativo®
